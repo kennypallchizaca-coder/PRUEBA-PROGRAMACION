@@ -2,74 +2,76 @@
 
 package ec.edu.ups.icc.prueba.Vehiculo.services;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import ec.edu.ups.icc.prueba.Vehiculo.dtos.CreateVehicleDto;
-import ec.edu.ups.icc.prueba.Vehiculo.dtos.PartialVehicleDto;
+
+import ec.edu.ups.icc.prueba.Vehiculo.dtos.OperationResponseDto;
 import ec.edu.ups.icc.prueba.Vehiculo.dtos.VehicleResponseDto;
+import ec.edu.ups.icc.prueba.Vehiculo.dtos.VehicleStockRequestDto;
+import ec.edu.ups.icc.prueba.Vehiculo.entities.VehicleEntity;
 import ec.edu.ups.icc.prueba.Vehiculo.mappers.VehicleMapper;
-import ec.edu.ups.icc.prueba.Vehiculo.models.Vehicle;
+import ec.edu.ups.icc.prueba.Vehiculo.repositories.VehiculoRepository;
 
 @Service
 public class VehicleServiceImpl implements VehicleService {
 
-    private List<Vehicle> vehicles = new ArrayList<>();
-    private int currentId = 1;
+    private final VehiculoRepository repository;
 
-    @Override
-    public List<VehicleResponseDto> findAll() {
-        return vehicles.stream().map(VehicleMapper::toResponseDto).toList();
+    public VehicleServiceImpl(VehiculoRepository repository) {
+        this.repository = repository;
     }
 
     @Override
-    public Object findById(int id) {
+    public List<VehicleResponseDto> findAllActive() {
+        List<VehicleEntity> vehicles = repository.findByDeleted("N");
         return vehicles.stream()
-                .filter(vehicle -> vehicle.getId() == id)
-                .findFirst()
                 .map(VehicleMapper::toResponseDto)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Vehicle not found"));
+                .toList();
     }
 
     @Override
-    public VehicleResponseDto create(CreateVehicleDto dto) {
-        Vehicle vehicle = VehicleMapper.toEntity(dto.brand, dto.model, dto.price, dto.stock, currentId++);
-        vehicles.add(vehicle);
-        return VehicleMapper.toResponseDto(vehicle);
+    public List<VehicleResponseDto> findLowStockExpensive() {
+        // stock < 5, price > 30000, deleted = "N"
+        List<VehicleEntity> vehicles = repository
+                .findByStockLessThanAndPriceGreaterThanAndDeleted(5, 30000.0, "N");
+        return vehicles.stream()
+                .map(VehicleMapper::toResponseDto)
+                .toList();
     }
 
     @Override
-    public Object update(int id, CreateVehicleDto dto) {
-        Vehicle vehicle = vehicles.stream().filter(v -> v.getId() == id).findFirst().orElse(null);
-        if (vehicle == null) return new Object() { public String error = "Vehicle not found"; };
+    public OperationResponseDto deleteByModel(String model) {
+        Optional<VehicleEntity> vehicleOpt = repository.findByModelAndDeleted(model, "N");
 
-        vehicle.setBrand(dto.brand);
-        vehicle.setModel(dto.model);
-        vehicle.setPrice(dto.price);
+        if (vehicleOpt.isEmpty()) {
+            return new OperationResponseDto("No se puede eliminar: el vehículo con modelo '" + model + "' no existe o ya está eliminado.");
+        }
+
+        VehicleEntity vehicle = vehicleOpt.get();
+        vehicle.setDeleted("S");
+        repository.save(vehicle);
+
+        return new OperationResponseDto("Vehículo con modelo '" + model + "' eliminado correctamente.");
+    }
+
+    @Override
+    public Object updateStock(VehicleStockRequestDto dto) {
+        if (dto.stock == null || dto.stock < 0) {
+            return new OperationResponseDto("El stock no puede ser negativo.");
+        }
+
+        Optional<VehicleEntity> vehicleOpt = repository.findByModelAndDeleted(dto.model, "N");
+
+        if (vehicleOpt.isEmpty()) {
+            return new OperationResponseDto("No se puede actualizar: el vehículo con modelo '" + dto.model + "' no existe o está eliminado.");
+        }
+
+        VehicleEntity vehicle = vehicleOpt.get();
         vehicle.setStock(dto.stock);
+        repository.save(vehicle);
 
         return VehicleMapper.toResponseDto(vehicle);
     }
-
-    @Override
-    public Object updatePartial(int id, PartialVehicleDto dto) {
-        Vehicle vehicle = vehicles.stream().filter(v -> v.getId() == id).findFirst().orElse(null);
-        if (vehicle == null) return new Object() { public String error = "Vehicle not found"; };
-
-        if (dto.brand != null) vehicle.setBrand(dto.brand);
-        if (dto.model != null) vehicle.setModel(dto.model);
-        if (dto.price != null) vehicle.setPrice(dto.price);
-        if (dto.stock != null) vehicle.setStock(dto.stock);
-
-        return VehicleMapper.toResponseDto(vehicle);
-    }
-
-    @Override
-    public Object delete(int id) {
-        boolean removed = vehicles.removeIf(v -> v.getId() == id);
-        if (!removed) return new Object() { public String error = "Vehicle not found"; };
-        return new Object() { public String message = "Deleted successfully"; };
-    }
-
 }

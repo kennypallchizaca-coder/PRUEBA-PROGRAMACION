@@ -1,21 +1,30 @@
 spring:
   application:
-    name: fundamentos01
-  
-  # Configuración de la fuente de datos PostgreSQL
+    name: prueba-vehiculos
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/devdb
-    username: ups
-    password: ups123
-  
-  # Configuración JPA/Hibernate
+    url: jdbc:h2:mem:vehiclesdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update  # Crea/actualiza tablas automáticamente
+      ddl-auto: none
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true  # Formatea SQL en los logs
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  sql:
+    init:
+      mode: always
 
 server:
   port: 8080

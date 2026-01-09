@@ -3,20 +3,17 @@
 package ec.edu.ups.icc.prueba.Vehiculo.mappers;
 
 import ec.edu.ups.icc.prueba.Vehiculo.dtos.VehicleResponseDto;
-import ec.edu.ups.icc.prueba.Vehiculo.models.Vehicle;
+import ec.edu.ups.icc.prueba.Vehiculo.entities.VehicleEntity;
 
 public class VehicleMapper {
-    public static Vehicle toEntity(String brand, String model, Double price, Integer stock, int id) {
-        return new Vehicle(id, brand, model, price, stock);
-    }
 
-    public static VehicleResponseDto toResponseDto(Vehicle vehicle) {
+    public static VehicleResponseDto toResponseDto(VehicleEntity entity) {
         VehicleResponseDto dto = new VehicleResponseDto();
-        dto.id = (long) vehicle.getId();
-        dto.brand = vehicle.getBrand();
-        dto.model = vehicle.getModel();
-        dto.price = vehicle.getPrice();
-        dto.stock = vehicle.getStock();
+        dto.id = entity.getId();
+        dto.brand = entity.getBrand();
+        dto.model = entity.getModel();
+        dto.price = entity.getPrice();
+        dto.stock = entity.getStock();
         return dto;
     }
 }

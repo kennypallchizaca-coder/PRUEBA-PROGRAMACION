@@ -9,22 +9,43 @@
 
 package ec.edu.ups.icc.prueba.Vehiculo.entities;
 
-import ec.edu.ups.icc.prueba.core.entities.BaseModel;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+@Entity
 @Table(name = "vehicles")
-public class VehicleEntity extends BaseModel {
+public class VehicleEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "brand", nullable = false)
     private String brand;
+
     @Column(name = "model", nullable = false)
     private String model;
+
     @Column(name = "price", nullable = false)
     private Double price;
+
     @Column(name = "stock", nullable = false)
     private Integer stock;
+
     @Column(name = "deleted", nullable = false)
-    private String deleted;
+    private String deleted = "N";
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getBrand() {
         return brand;
